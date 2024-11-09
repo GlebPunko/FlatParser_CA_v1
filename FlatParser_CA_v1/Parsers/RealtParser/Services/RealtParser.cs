@@ -1,65 +1,20 @@
-﻿using FlatParser_CA_v1.KufarParser.Interfaces;
-using FlatParser_CA_v1.Models;
+﻿using FlatParser_CA_v1.Models;
+using FlatParser_CA_v1.Parsers.RealtParser.Interfaces;
+using FlatParser_CA_v1.Services;
 using HtmlAgilityPack;
-using Telegram.Bot;
 
-namespace FlatParser_CA_v1.KufarParser.Services
+namespace FlatParser_CA_v1.Parsers.RealtParser.Services
 {
-    public class KufarService : IKufarService
+    public class RealtParser : IRealtParser
     {
         private HashSet<FlatInfo> lastElementsList = new();
         private HashSet<FlatInfo> differenceItems = new();
-        private ITelegramBotClient Bot { get; set; }
 
-        public KufarService(ITelegramBotClient bot)
+        private ITelegramBotClientService BotClientService { get; }
+
+        public RealtParser(ITelegramBotClientService botClientService)
         {
-            Bot = bot;
-        }
-
-        public async Task RunService(long chatId)
-        {
-            await Console.Out.WriteLineAsync("Version 2.0");
-
-            while (true)
-            {
-                try
-                {
-
-                    while (true)
-                    {
-                        var flatLinks = GetFlats("https://re.kufar.by/l/brest/snyat/kvartiru-dolgosrochno?cur=USD");
-
-                        if (flatLinks is null || flatLinks.Count == 0)
-                            continue;
-
-                        differenceItems = FindNotMatchElements(flatLinks);
-
-                        if (differenceItems.Count == 0 || differenceItems is null || differenceItems.Count > 25)
-                            continue;
-
-                        break;
-                    }
-
-                    Console.WriteLine("start send message: " + DateTime.Now);
-
-                    foreach (var item in differenceItems)
-                    {
-                        Console.WriteLine($"Link: {item} \nTime: {DateTime.UtcNow}");
-                        await Bot.SendMessage(chatId, $"Link: {item.Link}\nAddress: {item.Address}\nPrice: {item.Price}");
-                    }
-
-                    differenceItems.Clear();
-
-                    Console.WriteLine("end send message: " + DateTime.Now);
-                }
-                catch (Exception ex)
-                {
-                    await Bot.SendMessage(chatId, $"#unknown \nSource Name: {ex.Source} \n" +
-                        $"Message: \n{ex.Message} \nStack Trace: \n{ex.StackTrace} \n");
-
-                    continue;
-                }
-            }
+            BotClientService = botClientService;
         }
 
         public HashSet<FlatInfo> GetFlats(string url)
@@ -116,6 +71,52 @@ namespace FlatParser_CA_v1.KufarParser.Services
                 Console.WriteLine(ex.Message);
 
                 return flatLinks;
+            }
+        }
+
+        public async Task RunService(long chatId)
+        {
+            Console.WriteLine("RealtParser started.");
+
+            while (true)
+            {
+                try
+                {
+
+                    while (true)
+                    {
+                        var flatLinks = GetFlats("https://realt.by/brest-region/rent/flat-for-long/?sortType=createdAt&page=1");
+
+                        if (flatLinks is null || flatLinks.Count == 0)
+                            continue;
+
+                        differenceItems = FindNotMatchElements(flatLinks);
+
+                        if (differenceItems.Count == 0 || differenceItems is null || differenceItems.Count > 25)
+                            continue;
+
+                        break;
+                    }
+
+                    Console.WriteLine("start send message: " + DateTime.Now);
+
+                    foreach (var item in differenceItems)
+                    {
+                        Console.WriteLine($"Link: {item} \nTime: {DateTime.UtcNow}");
+                        await BotClientService.SendMessage(chatId, $"Link: {item.Link}\nAddress: {item.Address}\nPrice: {item.Price}");
+                    }
+
+                    differenceItems.Clear();
+
+                    Console.WriteLine("end send message: " + DateTime.Now);
+                }
+                catch (Exception ex)
+                {
+                    await BotClientService.SendMessage(chatId, $"#unknown \nSource Name: {ex.Source} \n" +
+                        $"Message: \n{ex.Message} \nStack Trace: \n{ex.StackTrace} \n");
+
+                    continue;
+                }
             }
         }
 

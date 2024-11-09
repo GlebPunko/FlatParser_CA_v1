@@ -1,25 +1,23 @@
-﻿using FlatParser_CA_v1.Handlers;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 using Microsoft.Extensions.DependencyInjection;
-using FlatParser_CA_v1.KufarParser.Interfaces;
-using FlatParser_CA_v1.KufarParser.Services;
 using FlatParser_CA_v1.Workers.Interfaces;
 using FlatParser_CA_v1.Workers;
 using FlatParser_CA_v1.Helper;
 using Microsoft.Extensions.Hosting;
-
-TelegramBotClient botClient = new("7886215570:AAEQXW35aZahmJ8Jl13LNPVVrnnutEsFQyY");
+using FlatParser_CA_v1.Services;
+using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
+using FlatParser_CA_v1.Parsers.KufarParser.Services;
+using FlatParser_CA_v1.Parsers.RealtParser.Interfaces;
+using FlatParser_CA_v1.Parsers.RealtParser.Services;
 
 using IHost host = CreateHostBuilder(args).Build();
 using var scope = host.Services.CreateScope();
 
 var services = scope.ServiceProvider;
 
-botClient.StartReceiving(Handlers.UpdateHandler, Handlers.ErrorHandler);
-
 try
 {
-    services.GetRequiredService<Worker>().RunWorker();
+    _ = services.GetRequiredService<Worker>().RunWorker();
 }
 catch (Exception e)
 {
@@ -35,6 +33,8 @@ IHostBuilder CreateHostBuilder(string[] strings)
         .ConfigureServices((_, services) =>
         {
             services.AddScoped<IKufarService, KufarService>();
+            services.AddScoped<IRealtParser, RealtParser>();
+            services.AddSingleton<ITelegramBotClientService, TelegramBotClientService>();
             services.AddSingleton<Worker>();
         });
 }
