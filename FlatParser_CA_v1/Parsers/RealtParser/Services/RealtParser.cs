@@ -9,22 +9,24 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
     {
         private HashSet<FlatInfo> lastElementsList = new();
         private HashSet<FlatInfo> differenceItems = new();
+        private Config ConfigSettings { get; }
         private const string flatUrl = "https://realt.by";
 
         private ITelegramBotClientService BotClientService { get; }
 
-        public RealtParser(ITelegramBotClientService botClientService)
+        public RealtParser(ITelegramBotClientService botClientService, Config configSettings)
         {
             BotClientService = botClientService;
+            ConfigSettings = configSettings;
         }
 
-        public HashSet<FlatInfo> GetFlats(string url)
+        public HashSet<FlatInfo> GetFlats()
         {
             var flatLinks = new HashSet<FlatInfo>();
 
             try
             {
-                HtmlDocument doc = GetDocument(url);
+                HtmlDocument doc = GetDocument();
 
                 if (doc is null)
                     return flatLinks;
@@ -41,10 +43,6 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
                 var pricesTemp = doc.DocumentNode.SelectNodes("//span[@class='text-title font-semibold text-info-500']")
                     .Select(x => x.InnerText)
                     .ToList();
-
-                //class="text-basic w-full text-subhead md:text-body" address
-                ///brest-region/rent-flat-for-long/object/3476081/ link
-                //class="text-title font-semibold text-info-500 price
 
                 if (links is null || pricesTemp is null || adresses is null)
                     return flatLinks;
@@ -71,7 +69,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
             }
         }
 
-        public async Task RunService(long chatId)
+        public async Task RunService()
         {
             Console.WriteLine("RealtParser started.");
 
@@ -82,7 +80,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
 
                     while (true)
                     {
-                        var flatLinks = GetFlats("https://realt.by/brest-region/rent/flat-for-long/?sortType=createdAt");
+                        var flatLinks = GetFlats();
 
                         if (flatLinks is null || flatLinks.Count == 0)
                             continue;
@@ -95,21 +93,18 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
                         break;
                     }
 
-                    Console.WriteLine("start send message: " + DateTime.Now);
-
                     foreach (var item in differenceItems)
                     {
                         Console.WriteLine($"Link: {item} \nTime: {DateTime.UtcNow}");
-                        await BotClientService.SendMessage(chatId, $"Link: {item.Link}\nAddress: {item.Address}\nPrice: {item.Price}");
+                        await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
+                            $"Address: {item.Address}\nPrice: {item.Price}");
                     }
 
                     differenceItems.Clear();
-
-                    Console.WriteLine("end send message: " + DateTime.Now);
                 }
                 catch (Exception ex)
                 {
-                    await BotClientService.SendMessage(chatId, $"#unknown \nSource Name: {ex.Source} \n" +
+                    await BotClientService.SendMessage(ConfigSettings.ChatId, $"#unknown \nSource Name: {ex.Source} \n" +
                         $"Message: \n{ex.Message} \nStack Trace: \n{ex.StackTrace} \n");
 
                     continue;
@@ -134,10 +129,10 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
             return temp;
         }
 
-        private HtmlDocument GetDocument(string url)
+        private HtmlDocument GetDocument()
         {
             HtmlWeb web = new();
-            HtmlDocument doc = web.Load(url);
+            HtmlDocument doc = web.Load(ConfigSettings.RealtAddress);
 
             return doc;
         }

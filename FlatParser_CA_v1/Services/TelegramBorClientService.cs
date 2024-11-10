@@ -1,21 +1,22 @@
-﻿using Telegram.Bot;
-using FlatParser_CA_v1.Handlers;
+﻿using FlatParser_CA_v1.Models;
+using Telegram.Bot;
 
 namespace FlatParser_CA_v1.Services
 {
     public class TelegramBotClientService : ITelegramBotClientService
     {
         public ITelegramBotClient Bot { get; }
+        private Config ConfigSettings { get; }
 
-        public TelegramBotClientService()
+        public TelegramBotClientService(Config config)
         {
-            Bot = new TelegramBotClient("7886215570:AAEQXW35aZahmJ8Jl13LNPVVrnnutEsFQyY");
+            ConfigSettings = config;
+            Bot = new TelegramBotClient(ConfigSettings.AccessToken);
         }
 
         public async Task SendMessage(long chatId, string message)
         {
-            Console.WriteLine("Send message method.");
-            await Bot.SendMessage(chatId, message);
+            await Bot.SendMessage(chatId == default ? ConfigSettings.ChatId : chatId, message);
         }
     }
 }

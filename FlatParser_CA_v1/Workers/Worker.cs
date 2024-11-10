@@ -1,27 +1,27 @@
-﻿using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
+﻿using FlatParser_CA_v1.Models;
+using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
 using FlatParser_CA_v1.Parsers.RealtParser.Interfaces;
-using FlatParser_CA_v1.Services;
 using FlatParser_CA_v1.Workers.Interfaces;
 
 namespace FlatParser_CA_v1.Workers
 {
     public class Worker : IWorker
     {
-        private IKufarService KufarService { get; set; }
-        private IRealtParser RealtParser { get; set; }
+        private IKufarParser KufarService { get; }
+        private IRealtParser RealtParser { get; }
 
-        public Worker(IKufarService kufarService, IRealtParser realtParser)
+        public Worker(IKufarParser kufarService, IRealtParser realtParser)
         {
             KufarService = kufarService;
             RealtParser = realtParser;
         }
 
-        public async Task RunWorker(long chatId)
+        public async Task RunWorker()
         {
             try
             {
-                Task realtTask = Task.Run(() => RealtParser.RunService(chatId));
-                Task kufarTask = Task.Run(() => KufarService.RunService(chatId));
+                Task realtTask = Task.Run(() => RealtParser.RunService());
+                Task kufarTask = Task.Run(() => KufarService.RunService());
 
                 await Task.WhenAll(realtTask, kufarTask);
             }

@@ -5,19 +5,22 @@ using HtmlAgilityPack;
 
 namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 {
-    public class KufarService : IKufarService
+    public class KufarParser : IKufarParser
     {
         private HashSet<FlatInfo> lastElementsList = new();
         private HashSet<FlatInfo> differenceItems = new();
 
+        private Config ConfigSettings { get; }
+
         private ITelegramBotClientService BotClientService { get; }
 
-        public KufarService(ITelegramBotClientService botClientService)
+        public KufarParser(ITelegramBotClientService botClientService, Config configSettings)
         {
             BotClientService = botClientService;
+            ConfigSettings = configSettings;
         }
 
-        public async Task RunService(long chatId)
+        public async Task RunService()
         {
             Console.WriteLine("KufarParser started.");
 
@@ -25,10 +28,9 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
             {
                 try
                 {
-
                     while (true)
                     {
-                        var flatLinks = GetFlats("https://re.kufar.by/l/brest/snyat/kvartiru-dolgosrochno?cur=USD");
+                        var flatLinks = GetFlats();
 
                         if (flatLinks is null || flatLinks.Count == 0)
                             continue;
@@ -41,21 +43,19 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
                         break;
                     }
 
-                    Console.WriteLine("start send message: " + DateTime.Now);
 
                     foreach (var item in differenceItems)
                     {
                         Console.WriteLine($"Link: {item} \nTime: {DateTime.UtcNow}");
-                        await BotClientService.SendMessage(chatId, $"Link: {item.Link}\nAddress: {item.Address}\nPrice: {item.Price}");
+                        await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
+                            $"Address: {item.Address}\nPrice: {item.Price}");
                     }
 
                     differenceItems.Clear();
-
-                    Console.WriteLine("end send message: " + DateTime.Now);
                 }
                 catch (Exception ex)
                 {
-                    await BotClientService.SendMessage(chatId, $"#unknown \nSource Name: {ex.Source} \n" +
+                    await BotClientService.SendMessage(ConfigSettings.ChatId, $"#unknown \nSource Name: {ex.Source} \n" +
                         $"Message: \n{ex.Message} \nStack Trace: \n{ex.StackTrace} \n");
 
                     continue;
@@ -63,13 +63,13 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
             }
         }
 
-        public HashSet<FlatInfo> GetFlats(string url)
+        public HashSet<FlatInfo> GetFlats()
         {
             var flatLinks = new HashSet<FlatInfo>();
 
             try
             {
-                HtmlDocument doc = GetDocument(url);
+                HtmlDocument doc = GetDocument();
 
                 if (doc is null)
                     return flatLinks;
@@ -90,8 +90,6 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
                     else
                         continue;
                 }
-
-                var baseUri = new Uri(url);
 
                 for (int i = 0; i < links.Count; i++)
                 {
@@ -137,10 +135,10 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
             return temp;
         }
 
-        private HtmlDocument GetDocument(string url)
+        private HtmlDocument GetDocument()
         {
             HtmlWeb web = new();
-            HtmlDocument doc = web.Load(url);
+            HtmlDocument doc = web.Load(ConfigSettings.KufarAddress);
 
             return doc;
         }
