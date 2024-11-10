@@ -7,11 +7,10 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 {
     public class KufarParser : IKufarParser
     {
-        private HashSet<FlatInfo> lastElementsList = new();
-        private HashSet<FlatInfo> differenceItems = new();
+        private HashSet<FlatInfo> oldFlats = new();
+        private HashSet<FlatInfo> newFindedFlats = new();
 
         private Config ConfigSettings { get; }
-
         private ITelegramBotClientService BotClientService { get; }
 
         public KufarParser(ITelegramBotClientService botClientService, Config configSettings)
@@ -23,7 +22,7 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
         public async Task RunService()
         {
             Console.WriteLine("KufarParser started.");
-
+            
             while (true)
             {
                 try
@@ -35,23 +34,26 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
                         if (flatLinks is null || flatLinks.Count == 0)
                             continue;
 
-                        differenceItems = FindNotMatchElements(flatLinks);
+                        FindNotMatchElements(flatLinks);
 
-                        if (differenceItems.Count == 0 || differenceItems is null || differenceItems.Count > 25)
+                        if (newFindedFlats.Count == 0 || newFindedFlats is null || newFindedFlats.Count > 25)
+                        {
+                            newFindedFlats.Clear();
                             continue;
-
+                        }
+                            
                         break;
                     }
 
 
-                    foreach (var item in differenceItems)
+                    foreach (var item in newFindedFlats)
                     {
-                        Console.WriteLine($"Link: {item} \nTime: {DateTime.UtcNow}");
+                        Console.WriteLine($"Link: {item.Link} \nTime: {DateTime.UtcNow}");
                         await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
                             $"Address: {item.Address}\nPrice: {item.Price}");
                     }
 
-                    differenceItems.Clear();
+                    newFindedFlats.Clear();
                 }
                 catch (Exception ex)
                 {
@@ -74,35 +76,29 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
                 if (doc is null)
                     return flatLinks;
 
-                HtmlNodeCollection links = doc.DocumentNode.SelectNodes("//section/a");
-                HtmlNodeCollection pricesTemp = doc.DocumentNode.SelectNodes("//section/a/div/div/div/span");
-                HtmlNodeCollection addresses = doc.DocumentNode.SelectNodes("//section/a/div/div/div/div/span");
+                var links = doc.DocumentNode.SelectNodes("//a")
+                    .Select(x => x.Attributes["href"].Value)
+                    .Where(x => x.Contains("vi/brest/snyat/kvartiru-dolgosrochno"))
+                    .ToList();
 
-                HtmlNodeCollection prices = new(null);
+                var prices = doc.DocumentNode.SelectNodes("//span[@class='styles_price__byr__lLSfd']")
+                    .Select(x => x.InnerHtml)
+                    .ToList();
 
-                if (links is null || pricesTemp is null || addresses is null)
+                var addresses = doc.DocumentNode.SelectNodes("//span[@class='styles_address__l6Qe_']")
+                    .Select(x => x.InnerHtml)
+                    .ToList();
+
+                if (links is null || prices is null || addresses is null)
                     return flatLinks;
-
-                for (int i = 0; i < pricesTemp.Count; i++)
-                {
-                    if (pricesTemp[i].InnerHtml.Contains("р.") || pricesTemp[i].InnerHtml.Contains("Договорная"))
-                        prices.Add(pricesTemp[i]);
-                    else
-                        continue;
-                }
 
                 for (int i = 0; i < links.Count; i++)
                 {
-                    string href = links[i].Attributes["href"].Value;
-                    int lastIndex = href.LastIndexOf('?');
-
-                    var res = href.Remove(lastIndex);
-
                     var flatInfo = new FlatInfo()
                     {
-                        Link = res,
-                        Price = prices[i].InnerHtml,
-                        Address = addresses[i].InnerHtml
+                        Link = links[i][..links[i].IndexOf("?")],
+                        Price = prices[i],
+                        Address = addresses[i]
                     };
 
                     flatLinks.Add(flatInfo);
@@ -113,26 +109,25 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-
+                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine(ex.Source);
+                Console.WriteLine(ex.InnerException);
+                
                 return flatLinks;
             }
         }
 
-        private HashSet<FlatInfo> FindNotMatchElements(HashSet<FlatInfo> bookLinks)
+        private void FindNotMatchElements(HashSet<FlatInfo> bookLinks)
         {
-            HashSet<FlatInfo> temp = new();
-
             foreach (var item in bookLinks)
             {
-                if (!lastElementsList.Contains(item))
+                if (!oldFlats.Contains(item))
                 {
-                    lastElementsList.Add(item);
+                    oldFlats.Add(item);
 
-                    temp.Add(item);
+                    newFindedFlats.Add(item);
                 }
             }
-
-            return temp;
         }
 
         private HtmlDocument GetDocument()

@@ -7,11 +7,12 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
 {
     public class RealtParser : IRealtParser
     {
-        private HashSet<FlatInfo> lastElementsList = new();
-        private HashSet<FlatInfo> differenceItems = new();
-        private Config ConfigSettings { get; }
+        private HashSet<FlatInfo> oldFlats = new();
+        private HashSet<FlatInfo> newFindedFlats = new();
+
         private const string flatUrl = "https://realt.by";
 
+        private Config ConfigSettings { get; }
         private ITelegramBotClientService BotClientService { get; }
 
         public RealtParser(ITelegramBotClientService botClientService, Config configSettings)
@@ -64,6 +65,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
 
                 return flatLinks;
             }
@@ -85,22 +87,25 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
                         if (flatLinks is null || flatLinks.Count == 0)
                             continue;
 
-                        differenceItems = FindNotMatchElements(flatLinks);
+                        FindNotMatchElements(flatLinks);
 
-                        if (differenceItems.Count == 0 || differenceItems is null || differenceItems.Count > 10)
+                        if (newFindedFlats.Count == 0 || newFindedFlats is null || newFindedFlats.Count > 10)
+                        {
+                            newFindedFlats.Clear();
                             continue;
+                        }
 
                         break;
                     }
 
-                    foreach (var item in differenceItems)
+                    foreach (var item in newFindedFlats)
                     {
-                        Console.WriteLine($"Link: {item} \nTime: {DateTime.UtcNow}");
+                        Console.WriteLine($"Link: {item.Link} \nTime: {DateTime.UtcNow}");
                         await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
                             $"Address: {item.Address}\nPrice: {item.Price}");
                     }
 
-                    differenceItems.Clear();
+                    newFindedFlats.Clear();
                 }
                 catch (Exception ex)
                 {
@@ -112,21 +117,17 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
             }
         }
 
-        private HashSet<FlatInfo> FindNotMatchElements(HashSet<FlatInfo> bookLinks)
+        private void FindNotMatchElements(HashSet<FlatInfo> bookLinks)
         {
-            HashSet<FlatInfo> temp = new();
-
             foreach (var item in bookLinks)
             {
-                if (!lastElementsList.Contains(item))
+                if (!oldFlats.Contains(item))
                 {
-                    lastElementsList.Add(item);
+                    oldFlats.Add(item);
 
-                    temp.Add(item);
+                    newFindedFlats.Add(item);
                 }
             }
-
-            return temp;
         }
 
         private HtmlDocument GetDocument()
