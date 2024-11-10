@@ -16,16 +16,18 @@ namespace FlatParser_CA_v1.Workers
             RealtParser = realtParser;
         }
 
-        public async Task RunWorker()
+        public async Task RunWorker(long chatId)
         {
             try
             {
-                await RealtParser.RunService(12);
-                //await KufarService.RunService(12);
+                Task realtTask = Task.Run(() => RealtParser.RunService(chatId));
+                Task kufarTask = Task.Run(() => KufarService.RunService(chatId));
+
+                await Task.WhenAll(realtTask, kufarTask);
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync($"Error: {ex.Message}");
+                await Console.Out.WriteLineAsync($"Error in Worker: {ex.Message}");
                 throw;
             }
         }

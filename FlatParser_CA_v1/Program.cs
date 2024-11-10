@@ -1,8 +1,5 @@
-﻿using Telegram.Bot;
-using Microsoft.Extensions.DependencyInjection;
-using FlatParser_CA_v1.Workers.Interfaces;
+﻿using Microsoft.Extensions.DependencyInjection;
 using FlatParser_CA_v1.Workers;
-using FlatParser_CA_v1.Helper;
 using Microsoft.Extensions.Hosting;
 using FlatParser_CA_v1.Services;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
@@ -17,7 +14,7 @@ var services = scope.ServiceProvider;
 
 try
 {
-    _ = services.GetRequiredService<Worker>().RunWorker();
+    _ = services.GetRequiredService<Worker>().RunWorker(-4527978350);
 }
 catch (Exception e)
 {

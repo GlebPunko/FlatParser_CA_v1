@@ -9,6 +9,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
     {
         private HashSet<FlatInfo> lastElementsList = new();
         private HashSet<FlatInfo> differenceItems = new();
+        private const string flatUrl = "https://realt.by";
 
         private ITelegramBotClientService BotClientService { get; }
 
@@ -28,37 +29,33 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
                 if (doc is null)
                     return flatLinks;
 
-                HtmlNodeCollection links = doc.DocumentNode.SelectNodes("//section/a");
-                HtmlNodeCollection pricesTemp = doc.DocumentNode.SelectNodes("//section/a/div/div/div/span");
-                HtmlNodeCollection addresses = doc.DocumentNode.SelectNodes("//section/a/div/div/div/div/span");
+                var links = doc.DocumentNode.SelectNodes("//a")
+                    .Select(x => x.Attributes["href"].Value)
+                    .Where(x => x.Contains("object"))
+                    .ToList();
 
-                HtmlNodeCollection prices = new(null);
+                var adresses = doc.DocumentNode.SelectNodes("//p[@class='text-basic w-full text-subhead md:text-body']")
+                    .Select(x => x.InnerText)
+                    .ToList();
 
-                if (links is null || pricesTemp is null || addresses is null)
+                var pricesTemp = doc.DocumentNode.SelectNodes("//span[@class='text-title font-semibold text-info-500']")
+                    .Select(x => x.InnerText)
+                    .ToList();
+
+                //class="text-basic w-full text-subhead md:text-body" address
+                ///brest-region/rent-flat-for-long/object/3476081/ link
+                //class="text-title font-semibold text-info-500 price
+
+                if (links is null || pricesTemp is null || adresses is null)
                     return flatLinks;
-
-                for (int i = 0; i < pricesTemp.Count; i++)
-                {
-                    if (pricesTemp[i].InnerHtml.Contains("р.") || pricesTemp[i].InnerHtml.Contains("Договорная"))
-                        prices.Add(pricesTemp[i]);
-                    else
-                        continue;
-                }
-
-                var baseUri = new Uri(url);
 
                 for (int i = 0; i < links.Count; i++)
                 {
-                    string href = links[i].Attributes["href"].Value;
-                    int lastIndex = href.LastIndexOf('?');
-
-                    var res = href.Remove(lastIndex);
-
                     var flatInfo = new FlatInfo()
                     {
-                        Link = res,
-                        Price = prices[i].InnerHtml,
-                        Address = addresses[i].InnerHtml
+                        Link = flatUrl + links[i],
+                        Price = pricesTemp[i],
+                        Address = adresses[i],
                     };
 
                     flatLinks.Add(flatInfo);
@@ -85,14 +82,14 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
 
                     while (true)
                     {
-                        var flatLinks = GetFlats("https://realt.by/brest-region/rent/flat-for-long/?sortType=createdAt&page=1");
+                        var flatLinks = GetFlats("https://realt.by/brest-region/rent/flat-for-long/?sortType=createdAt");
 
                         if (flatLinks is null || flatLinks.Count == 0)
                             continue;
 
                         differenceItems = FindNotMatchElements(flatLinks);
 
-                        if (differenceItems.Count == 0 || differenceItems is null || differenceItems.Count > 25)
+                        if (differenceItems.Count == 0 || differenceItems is null || differenceItems.Count > 10)
                             continue;
 
                         break;

@@ -19,7 +19,7 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 
         public async Task RunService(long chatId)
         {
-            await Console.Out.WriteLineAsync("KufarParser started.");
+            Console.WriteLine("KufarParser started.");
 
             while (true)
             {
