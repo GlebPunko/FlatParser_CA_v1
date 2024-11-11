@@ -41,7 +41,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
                     .Select(x => x.InnerText)
                     .ToList();
 
-                var pricesTemp = doc.DocumentNode.SelectNodes("//span[@class='text-title font-semibold text-info-500']")
+                var pricesTemp = doc.DocumentNode.SelectNodes("//span[@class='text-basic text-subhead']")
                     .Select(x => x.InnerText)
                     .ToList();
 
