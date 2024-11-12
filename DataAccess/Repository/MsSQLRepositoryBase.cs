@@ -2,13 +2,8 @@
 
 namespace DataAccess.Repository
 {
-    public abstract class MsSqlRepositoryBase
+    public abstract class MsSqlRepositoryBase(string connectionString)
     {
-        protected IDb Database { get; }
-
-        public MsSqlRepositoryBase(string connectionString)
-        {
-            Database = new Database.MsSql(connectionString);
-        }
+        protected IDb Database { get; } = new MsSql(connectionString);
     }
 }

@@ -4,14 +4,9 @@ using System.Data.SqlClient;
 
 namespace Database
 {
-    public class MsSql : IDb
+    public class MsSql(string connectionString) : IDb
     {
-        private string ConnectionString { get; set; }
-
-        public MsSql(string connectionString)
-        {
-            ConnectionString = connectionString;
-        }
+        private string ConnectionString { get; set; } = "Server=localhost; Database=FlatDb; TrustedConnection=True;";
 
         public async Task<IEnumerable<T>> LoadData<T>(string sql, object parameters, CancellationToken cancellationToken = default)
         {

@@ -1,4 +1,6 @@
-﻿using FlatParser_CA_v1.Helpers;
+﻿using DataAccess.Repository;
+using DataAccess.Repository.Interface;
+using FlatParser_CA_v1.Helpers;
 using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
 using FlatParser_CA_v1.Parsers.KufarParser.Services;
@@ -34,11 +36,14 @@ static IHostBuilder CreateHostBuilder(string[] strings)
             services.AddSingleton<Config>(provider =>
             {
                 var configReader = new ConfigReader("config.json");
+
                 return configReader.ReadConfig();
             });
 
             services.AddScoped<IKufarParser, KufarParser>();
             services.AddScoped<IRealtParser, RealtParser>();
+            services.AddScoped<IFlatRepository, FlatRepository>();
+
             services.AddSingleton<ITelegramBotClientService, TelegramBotClientService>();
             services.AddSingleton<Worker>();
         });

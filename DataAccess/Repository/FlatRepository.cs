@@ -1,8 +1,9 @@
 ﻿using DataAccess.Entity;
+using DataAccess.Repository.Interface;
 
 namespace DataAccess.Repository
 {
-    public class FlatRepository(string connectionString) : MsSqlRepositoryBase(connectionString)
+    public class FlatRepository(string connectionString) : MsSqlRepositoryBase(connectionString), IFlatRepository
     {
         public async Task<IEnumerable<FlatEntity>> GetFlats(CancellationToken cancellationToken = default)
         {
