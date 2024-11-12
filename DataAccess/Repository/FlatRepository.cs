@@ -12,6 +12,14 @@ namespace DataAccess.Repository
             return await Database.LoadData<FlatEntity>(sql, parameters: null, cancellationToken);
         }
 
+        //Here need to do something with logic (future)
+        public async Task<bool> CheckFlatExists(string address, string link, CancellationToken cancellationToken = default)
+        {
+            var sql = "SELECT EXISTS(SELECT 1 FROM [dbo].Flats WHERE Address = @address AND Link = @link";
+
+            return await Database.LoadDataSingle<bool>(sql, new {address, link}, cancellationToken);
+        }
+
         public async Task<bool> AddFlat(FlatEntity flat)
         {
             var sql = "INSERT INTO [dbo].Flats (Link, Address, Price) VALUES (@Link, @Address, @Price)";

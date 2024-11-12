@@ -1,7 +1,9 @@
-﻿using FlatParser_CA_v1.Models;
+﻿using DataAccess.Repository.Interface;
+using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
 using FlatParser_CA_v1.Services;
 using HtmlAgilityPack;
+using OpenQA.Selenium.DevTools.V128.Network;
 
 namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 {
@@ -12,11 +14,13 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 
         private Config ConfigSettings { get; }
         private ITelegramBotClientService BotClientService { get; }
+        private IFlatRepository FlatRepository { get; }
 
-        public KufarParser(ITelegramBotClientService botClientService, Config configSettings)
+        public KufarParser(ITelegramBotClientService botClientService, IFlatRepository flatRepository, Config configSettings)
         {
             BotClientService = botClientService;
             ConfigSettings = configSettings;
+            FlatRepository = flatRepository;
         }
 
         public async Task RunService()
