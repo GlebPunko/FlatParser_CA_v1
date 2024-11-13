@@ -1,26 +1,23 @@
-﻿using DataAccess.Repository.Interface;
+﻿using ConcurrentCollections;
 using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
-using FlatParser_CA_v1.Services;
+using FlatParser_CA_v1.Services.Interfaces;
 using HtmlAgilityPack;
-using OpenQA.Selenium.DevTools.V128.Network;
 
 namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 {
     public class KufarParser : IKufarParser
     {
-        private HashSet<FlatInfo> oldFlats = new();
-        private HashSet<FlatInfo> newFindedFlats = new();
-
+        private ConcurrentHashSet<FlatInfo> newFindedFlats = new();
         private Config ConfigSettings { get; }
         private ITelegramBotClientService BotClientService { get; }
-        private IFlatRepository FlatRepository { get; }
+        private IFlatService FlatService { get; }
 
-        public KufarParser(ITelegramBotClientService botClientService, IFlatRepository flatRepository, Config configSettings)
+        public KufarParser(ITelegramBotClientService botClientService, IFlatService flatService, Config configSettings)
         {
             BotClientService = botClientService;
             ConfigSettings = configSettings;
-            FlatRepository = flatRepository;
+            FlatService = flatService;
         }
 
         public async Task RunService()
@@ -42,7 +39,10 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 
                         if (newFindedFlats.Count == 0 || newFindedFlats is null || newFindedFlats.Count > 25)
                         {
+                            await SaveFlats();
+
                             newFindedFlats.Clear();
+
                             continue;
                         }
                             
@@ -53,8 +53,8 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
                     foreach (var item in newFindedFlats)
                     {
                         Console.WriteLine($"Link: {item.Link} \nTime: {DateTime.UtcNow}");
-                        await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
-                            $"Address: {item.Address}\nPrice: {item.Price}");
+                        //await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
+                        //    $"Address: {item.Address}\nPrice: {item.Price}");
                     }
 
                     newFindedFlats.Clear();
@@ -121,16 +121,15 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
             }
         }
 
-        private void FindNotMatchElements(HashSet<FlatInfo> bookLinks)
+        private async void FindNotMatchElements(HashSet<FlatInfo> bookLinks)
         {
-            foreach (var item in bookLinks)
+            foreach(var item in bookLinks)
             {
-                if (!oldFlats.Contains(item))
-                {
-                    oldFlats.Add(item);
+                var isExists = await FlatService.CheckFlatExists(item.Address, item.Link);
 
+                if(!isExists)
                     newFindedFlats.Add(item);
-                }
+                
             }
         }
 
@@ -140,6 +139,21 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
             HtmlDocument doc = web.Load(ConfigSettings.KufarAddress);
 
             return doc;
+        }
+
+        private async Task<bool> SaveFlats()
+        {
+            foreach(var item in newFindedFlats)
+            {
+                var success = await FlatService.AddFlat(item);
+
+                if(!success)
+                {
+                    Console.WriteLine($"flat was not saved: {item.Address}");
+                } 
+            }
+
+            return true;
         }
     }
 }

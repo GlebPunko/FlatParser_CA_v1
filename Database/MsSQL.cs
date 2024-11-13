@@ -6,7 +6,7 @@ namespace Database
 {
     public class MsSql(string connectionString) : IDb
     {
-        private string ConnectionString { get; set; } = "Server=localhost; Database=FlatDb; TrustedConnection=True;";
+        private string ConnectionString { get; set; } = connectionString;
 
         public async Task<IEnumerable<T>> LoadData<T>(string sql, object parameters, CancellationToken cancellationToken = default)
         {

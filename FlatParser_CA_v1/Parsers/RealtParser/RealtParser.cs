@@ -1,9 +1,9 @@
 ﻿using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.RealtParser.Interfaces;
-using FlatParser_CA_v1.Services;
+using FlatParser_CA_v1.Services.Interfaces;
 using HtmlAgilityPack;
 
-namespace FlatParser_CA_v1.Parsers.RealtParser.Services
+namespace FlatParser_CA_v1.Parsers.RealtParser
 {
     public class RealtParser : IRealtParser
     {

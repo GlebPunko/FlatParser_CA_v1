@@ -1,4 +1,5 @@
 ﻿using FlatParser_CA_v1.Models;
+using FlatParser_CA_v1.Services.Interfaces;
 using Telegram.Bot;
 
 namespace FlatParser_CA_v1.Services

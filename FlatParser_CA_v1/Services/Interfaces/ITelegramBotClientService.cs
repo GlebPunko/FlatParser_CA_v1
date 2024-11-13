@@ -1,4 +1,4 @@
-﻿namespace FlatParser_CA_v1.Services
+﻿namespace FlatParser_CA_v1.Services.Interfaces
 {
     public interface ITelegramBotClientService
     {
