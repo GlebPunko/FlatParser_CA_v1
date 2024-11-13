@@ -37,13 +37,13 @@ static IHostBuilder CreateHostBuilder(string[] strings)
         {
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
-            services.AddSingleton<Config>(provider =>
+            services.AddSingleton<StoredConfigs>(provider =>
             {
-                var configReader = new ConfigReader("config.json");
-
+                var configReader = new ConfigsReader("config.json", "cursorBrest.json");
+                
                 return configReader.ReadConfig();
             });
-
+            
             services.AddScoped<IKufarParser, KufarParser>();
             services.AddScoped<IRealtParser, RealtParser>();
 

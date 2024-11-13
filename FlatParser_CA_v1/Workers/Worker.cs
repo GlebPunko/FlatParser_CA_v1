@@ -20,10 +20,10 @@ namespace FlatParser_CA_v1.Workers
         {
             try
             {
-                Task realtTask = Task.Run(() => RealtParser.RunService());
+                //Task realtTask = Task.Run(() => RealtParser.RunService());
                 Task kufarTask = Task.Run(() => KufarService.RunService());
 
-                await Task.WhenAll(realtTask, kufarTask);
+                await Task.WhenAll(kufarTask);
             }
             catch (Exception ex)
             {

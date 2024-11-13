@@ -3,20 +3,21 @@ using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
 using FlatParser_CA_v1.Services.Interfaces;
 using HtmlAgilityPack;
+using System.Text;
 
 namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 {
     public class KufarParser : IKufarParser
     {
         private ConcurrentHashSet<FlatInfo> newFindedFlats = new();
-        private Config ConfigSettings { get; }
+        private StoredConfigs ConfigSettingsInfo { get; }
         private ITelegramBotClientService BotClientService { get; }
         private IFlatService FlatService { get; }
 
-        public KufarParser(ITelegramBotClientService botClientService, IFlatService flatService, Config configSettings)
+        public KufarParser(ITelegramBotClientService botClientService, IFlatService flatService, StoredConfigs configSettings)
         {
             BotClientService = botClientService;
-            ConfigSettings = configSettings;
+            ConfigSettingsInfo = configSettings;
             FlatService = flatService;
         }
 
@@ -53,15 +54,15 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
                     foreach (var item in newFindedFlats)
                     {
                         Console.WriteLine($"Link: {item.Link} \nTime: {DateTime.UtcNow}");
-                        //await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
-                        //    $"Address: {item.Address}\nPrice: {item.Price}");
+                        await BotClientService.SendMessage(ConfigSettingsInfo.Config.ChatId, $"Link: {item.Link}\n" +
+                            $"Address: {item.Address}\nPrice: {item.Price}");
                     }
 
                     newFindedFlats.Clear();
                 }
                 catch (Exception ex)
                 {
-                    await BotClientService.SendMessage(ConfigSettings.ChatId, $"#unknown \nSource Name: {ex.Source} \n" +
+                    await BotClientService.SendMessage(ConfigSettingsInfo.Config.ChatId, $"#unknown \nSource Name: {ex.Source} \n" +
                         $"Message: \n{ex.Message} \nStack Trace: \n{ex.StackTrace} \n");
 
                     continue;
@@ -136,7 +137,7 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
         private HtmlDocument GetDocument()
         {
             HtmlWeb web = new();
-            HtmlDocument doc = web.Load(ConfigSettings.KufarAddress);
+            HtmlDocument doc = web.Load(ConfigSettingsInfo.Config.KufarAddress);
 
             return doc;
         }
@@ -155,5 +156,10 @@ namespace FlatParser_CA_v1.Parsers.KufarParser.Services
 
             return true;
         }
+
+        //private async Task<List<StringBuilder>> AddCursor()
+        //{
+            
+        //}
     }
 }
