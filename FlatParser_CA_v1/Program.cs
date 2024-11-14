@@ -2,8 +2,8 @@
 using DataAccess.Repository.Interface;
 using FlatParser_CA_v1.Helpers;
 using FlatParser_CA_v1.Models;
+using FlatParser_CA_v1.Parsers.KufarParser;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
-using FlatParser_CA_v1.Parsers.KufarParser.Services;
 using FlatParser_CA_v1.Parsers.RealtParser;
 using FlatParser_CA_v1.Parsers.RealtParser.Interfaces;
 using FlatParser_CA_v1.Services;
