@@ -1,4 +1,5 @@
 ﻿using FlatParser_CA_v1.Models;
+using FlatParser_CA_v1.Parsers.KufarParser;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
 using FlatParser_CA_v1.Parsers.RealtParser.Interfaces;
 using FlatParser_CA_v1.Workers.Interfaces;
@@ -22,7 +23,7 @@ namespace FlatParser_CA_v1.Workers
             {
                 //Task realtTask = Task.Run(() => RealtParser.RunService());
                 Task kufarTask = Task.Run(() => KufarService.RunService());
-
+                //await KufarService.RunService();
                 await Task.WhenAll(kufarTask);
             }
             catch (Exception ex)

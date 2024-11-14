@@ -159,6 +159,9 @@ namespace FlatParser_CA_v1.Parsers.KufarParser
 
                 var html = web.Load(changedUrl);
 
+                if (html is null)
+                    break;
+
                 var str = html.DocumentNode.SelectNodes("//span[@class='styles_link__8m3I9 styles_active__GRR1D']")
                     .Select(x => x.InnerHtml);
 
