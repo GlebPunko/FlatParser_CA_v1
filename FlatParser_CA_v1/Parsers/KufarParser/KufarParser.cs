@@ -157,18 +157,30 @@ namespace FlatParser_CA_v1.Parsers.KufarParser
             {
                 var changedUrl = await AddCursorsToLink(ConfigSettingsInfo.Config.KufarAddress, page);
 
-                var html = web.Load(changedUrl);
+                try
+                {
+                    var html = web.Load(changedUrl);
 
-                if (html is null)
+                    if (html is null || html.DocumentNode is null )
+                        break;
+
+                    var nodes = html.DocumentNode.SelectNodes("//span[@class='styles_link__8m3I9 styles_active__GRR1D']");
+
+                    if (nodes is null || nodes.Count == 0)
+                        break;
+
+                    if (nodes.Select(x => x.InnerHtml).Contains("1") && HtmlDocs.Count > 1)
+                        break;
+
+                    HtmlDocs.Add(html);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.Source);
                     break;
+                }
 
-                var str = html.DocumentNode.SelectNodes("//span[@class='styles_link__8m3I9 styles_active__GRR1D']")
-                    .Select(x => x.InnerHtml);
-
-                if (str.Contains("1") && HtmlDocs.Count > 1)
-                    break;
-
-                HtmlDocs.Add(html);
                 page++;
             }
         }
