@@ -23,9 +23,10 @@ namespace DataAccess.Repository
 
         public async Task<bool> AddFlat(FlatEntity flat)
         {
-            var sql = "INSERT INTO [dbo].parsed_flats (Link, Address, Price) VALUES (@Link, @Address, @Price)";
+            var sql = "INSERT INTO [dbo].parsed_flats (Link, Address, Price, RegionId) " +
+                "VALUES (@Link, @Address, @Price, @RegionId)";
 
-            return await Database.SaveData(sql, new {flat.Link, flat.Address, flat.Price});
+            return await Database.SaveData(sql, new {flat.Link, flat.Address, flat.Price, flat.RegionId});
         }
     }
 }
