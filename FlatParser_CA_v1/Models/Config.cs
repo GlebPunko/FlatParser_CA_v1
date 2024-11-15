@@ -6,5 +6,6 @@
         public long ChatId { get; set; }
         public string KufarAddress { get; set; }
         public string RealtAddress { get; set; }
+        public string ConnectionString { get; set; }
     }
 }

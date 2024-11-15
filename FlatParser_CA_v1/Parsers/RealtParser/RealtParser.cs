@@ -1,9 +1,9 @@
 ﻿using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.RealtParser.Interfaces;
-using FlatParser_CA_v1.Services;
+using FlatParser_CA_v1.Services.Interfaces;
 using HtmlAgilityPack;
 
-namespace FlatParser_CA_v1.Parsers.RealtParser.Services
+namespace FlatParser_CA_v1.Parsers.RealtParser
 {
     public class RealtParser : IRealtParser
     {
@@ -12,10 +12,10 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
 
         private const string flatUrl = "https://realt.by";
 
-        private Config ConfigSettings { get; }
+        private StoredConfigs ConfigSettings { get; }
         private ITelegramBotClientService BotClientService { get; }
 
-        public RealtParser(ITelegramBotClientService botClientService, Config configSettings)
+        public RealtParser(ITelegramBotClientService botClientService, StoredConfigs configSettings)
         {
             BotClientService = botClientService;
             ConfigSettings = configSettings;
@@ -101,7 +101,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
                     foreach (var item in newFindedFlats)
                     {
                         Console.WriteLine($"Link: {item.Link} \nTime: {DateTime.UtcNow}");
-                        await BotClientService.SendMessage(ConfigSettings.ChatId, $"Link: {item.Link}\n" +
+                        await BotClientService.SendMessage(ConfigSettings.Config.ChatId, $"Link: {item.Link}\n" +
                             $"Address: {item.Address}\nPrice: {item.Price}");
                     }
 
@@ -109,7 +109,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
                 }
                 catch (Exception ex)
                 {
-                    await BotClientService.SendMessage(ConfigSettings.ChatId, $"#unknown \nSource Name: {ex.Source} \n" +
+                    await BotClientService.SendMessage(ConfigSettings.Config.ChatId, $"#unknown \nSource Name: {ex.Source} \n" +
                         $"Message: \n{ex.Message} \nStack Trace: \n{ex.StackTrace} \n");
 
                     continue;
@@ -133,7 +133,7 @@ namespace FlatParser_CA_v1.Parsers.RealtParser.Services
         private HtmlDocument GetDocument()
         {
             HtmlWeb web = new();
-            HtmlDocument doc = web.Load(ConfigSettings.RealtAddress);
+            HtmlDocument doc = web.Load(ConfigSettings.Config.RealtAddress);
 
             return doc;
         }
