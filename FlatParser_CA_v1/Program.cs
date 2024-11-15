@@ -1,6 +1,8 @@
 ﻿using DataAccess.Repository;
 using DataAccess.Repository.Interface;
 using FlatParser_CA_v1.Helpers;
+using FlatParser_CA_v1.Logger;
+using FlatParser_CA_v1.Logger.Interface;
 using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.KufarParser;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
@@ -37,21 +39,28 @@ static IHostBuilder CreateHostBuilder(string[] strings)
         {
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
+            string connectionString = null;
+
             services.AddSingleton<StoredConfigs>(provider =>
             {
                 var configReader = new ConfigsReader("config.json", "cursorBrest.json");
                 
-                return configReader.ReadConfig();
+                var config =  configReader.ReadConfig();
+
+                connectionString = config.Config.ConnectionString;
+
+                return config;
             });
             
             services.AddScoped<IKufarParser, KufarParser>();
             services.AddScoped<IRealtParser, RealtParser>();
 
-            services.AddScoped<IFlatRepository>(_ => 
-                new FlatRepository("Server=localhost;Database=FlatDb;Trusted_Connection=True;MultipleActiveResultSets=true"));//need to fix
+            services.AddScoped<IFlatRepository>(_ => new FlatRepository(connectionString));
+            services.AddScoped<ILogRepository>(_ => new LogRepository(connectionString));
 
             services.AddSingleton<ITelegramBotClientService, TelegramBotClientService>();
             services.AddSingleton<IFlatService, FlatService>();
+            services.AddSingleton<ILogger, Logger>();
 
             services.AddSingleton<Worker>();
         });

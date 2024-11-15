@@ -1,4 +1,5 @@
 ﻿using ConcurrentCollections;
+using FlatParser_CA_v1.Logger.Interface;
 using FlatParser_CA_v1.Models;
 using FlatParser_CA_v1.Parsers.KufarParser.Interfaces;
 using FlatParser_CA_v1.Services.Interfaces;
@@ -17,12 +18,15 @@ namespace FlatParser_CA_v1.Parsers.KufarParser
         private StoredConfigs ConfigSettingsInfo { get; }
         private ITelegramBotClientService BotClientService { get; }
         private IFlatService FlatService { get; }
+        private ILogger Logger { get; }
 
-        public KufarParser(ITelegramBotClientService botClientService, IFlatService flatService, StoredConfigs configSettings)
+        public KufarParser(ITelegramBotClientService botClientService, IFlatService flatService, 
+            StoredConfigs configSettings, ILogger logger)
         {
             BotClientService = botClientService;
             ConfigSettingsInfo = configSettings;
             FlatService = flatService;
+            Logger = logger;
         }
 
         public async Task RunService()
@@ -68,8 +72,7 @@ namespace FlatParser_CA_v1.Parsers.KufarParser
                 }
                 catch (Exception ex)
                 {
-                    await BotClientService.SendMessage(ConfigSettingsInfo.Config.ChatId, $"#unknown \nSource Name: {ex.Source} \n" +
-                        $"Message: \n{ex.Message} \nStack Trace: \n{ex.StackTrace} \n");
+                    await Logger.Log(ex);
 
                     continue;
                 }
@@ -115,7 +118,8 @@ namespace FlatParser_CA_v1.Parsers.KufarParser
                         {
                             Link = links[j][..links[j].IndexOf("?")],
                             Price = prices[j],
-                            Address = addresses[j]
+                            Address = addresses[j],
+                            RegionId = 1
                         };
 
                         flatLinks.Add(flatInfo);
@@ -128,10 +132,7 @@ namespace FlatParser_CA_v1.Parsers.KufarParser
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
-                Console.WriteLine(ex.Source);
-                Console.WriteLine(ex.InnerException);
+                Logger.Log(ex);
 
                 return flatLinks;
             }
@@ -176,8 +177,8 @@ namespace FlatParser_CA_v1.Parsers.KufarParser
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine(ex.Source);
+                    Logger.Log(ex);
+
                     break;
                 }
 
